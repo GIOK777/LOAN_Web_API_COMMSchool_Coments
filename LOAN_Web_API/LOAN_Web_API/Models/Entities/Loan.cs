@@ -1,4 +1,5 @@
 ﻿using LOAN_Web_API.Models.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LOAN_Web_API.Models.Entities
 {
@@ -6,11 +7,13 @@ namespace LOAN_Web_API.Models.Entities
     {
         public int Id { get; set; }
         public LoanType loanType { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
-        public string Currency { get; set; } = null!;
+        public Currency Currency { get; set; }
         public int Period { get; set; }
         public LoanStatus Status { get; set; } = LoanStatus.Processing;
         public int UserId { get; set; }
-        public User user { get; set; } = null!;
+        public User User { get; set; } = null!;
     }
 }
