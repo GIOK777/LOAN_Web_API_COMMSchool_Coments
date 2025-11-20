@@ -4,7 +4,7 @@ namespace LOAN_Web_API.Interfaces
 {
     public interface IAuthService
     {
-        Task<string> RegisterAsync(RegisterDto dto);
-        Task<string> LoginAsync(LoginDto dto);
+        Task<string> RegisterAsync(RegisterDTO registerDTO);
+        Task<string> LoginAsync(LoginDTO loginDTO);
     }
 }

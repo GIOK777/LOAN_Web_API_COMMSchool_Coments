@@ -22,11 +22,11 @@ namespace LOAN_Web_API.Services
             _config = config;
         }
 
+
         public async Task<string> RegisterAsync(RegisterDTO registerDTO)
         {
             if (await _context.Users.AnyAsync(x => x.UserName == registerDTO.Username))
                 throw new Exception("Username already exists");
-
             var user = new User
             {
                 FirstName = registerDTO.FirstName,
@@ -38,23 +38,21 @@ namespace LOAN_Web_API.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDTO.Password), // salted+hashed
                 Role = Role.User
             };
-
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-
             return "User registered successfully";
         }
+
 
         public async Task<string> LoginAsync(LoginDTO loginDTO)
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == loginDTO.Username);
             if (user == null) throw new Exception("User not found");
-
             bool isValid = BCrypt.Net.BCrypt.Verify(loginDTO.Password, user.PasswordHash);
             if (!isValid) throw new Exception("Invalid password");
-
             return GenerateJwtToken(user);
         }
+
 
         private string GenerateJwtToken(User user)
         {
@@ -62,15 +60,12 @@ namespace LOAN_Web_API.Services
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(ClaimTypes.Role, user.Role.ToString())
         };
-
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 _config["Jwt:Key"]
             ));
-
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
@@ -78,7 +73,6 @@ namespace LOAN_Web_API.Services
                 expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: creds
             );
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
