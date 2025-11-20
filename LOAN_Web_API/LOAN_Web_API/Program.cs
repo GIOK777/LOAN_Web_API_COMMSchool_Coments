@@ -1,5 +1,7 @@
 
+using LOAN_Web_API.Interfaces;
 using LOAN_Web_API.Models;
+using LOAN_Web_API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -23,6 +25,9 @@ namespace LOAN_Web_API
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
 
 
 
