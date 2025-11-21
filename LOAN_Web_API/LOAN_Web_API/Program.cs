@@ -64,6 +64,7 @@ namespace LOAN_Web_API
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<ILoanService, LoanService>();
 
 
 
