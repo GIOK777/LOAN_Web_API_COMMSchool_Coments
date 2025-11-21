@@ -36,7 +36,7 @@ namespace LOAN_Web_API.Services
                 Email = registerDTO.Email,
                 MonthlyIncome = registerDTO.MonthlyIncome,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDTO.Password), // salted+hashed
-                Role = Role.Administrator
+                Role = Role.User
             };
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
