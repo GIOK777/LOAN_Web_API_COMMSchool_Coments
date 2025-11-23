@@ -16,75 +16,114 @@ namespace LOAN_Web_API.Services
             _context = context;
         }
 
-        public async Task<Loan> CreateLoanAsync(int userId, CreateLoanDTO createLoanDTO)
+        public async Task<Loan> CreateLoanAsync(int userId, CreateLoanDTO createLoanDTO, Role role)
         {
-            var user = await _context.Users.FindAsync(userId);
-
-            if (user == null)
-                throw new Exception("User not found");
-
-            if (user.IsBlocked)
-                throw new Exception("Blocked users cannot request loans");
+            // Admin bypass  
+            if (role != Role.Administrator)
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user.IsBlocked)
+                    throw new Exception("You are blocked and cannot create a loan.");
+            }
 
             var loan = new Loan
             {
                 UserId = userId,
                 Amount = createLoanDTO.Amount,
+                Currency = createLoanDTO.Currency,
                 PeriodInMonths = createLoanDTO.PeriodInMonths,
-                Status = LoanStatus.Processing
+                loanType = createLoanDTO.LoanType,
+                Status = LoanStatus.Processing,
             };
 
-            await _context.Loans.AddAsync(loan);
+            _context.Loans.Add(loan);
             await _context.SaveChangesAsync();
-
             return loan;
         }
 
-        public async Task<IEnumerable<Loan>> GetUserLoansAsync(int userId)
+
+
+        // როცა უბრალოდ "ვბრუნებ კოლექციას" და nothing more -  ვიყენებთ IEnumerable
+        public async Task<IEnumerable<Loan>> GetLoansAsync(int userId, Role role)
         {
+            if (role == Role.Administrator)
+                return await _context.Loans.ToListAsync();
+
             return await _context.Loans
-                .Where(x => x.UserId == userId)
+                .Where(l => l.UserId == userId)
                 .ToListAsync();
         }
 
-        public async Task<Loan> UpdateLoanAsync(int userId, int loanId, UpdateLoanDto updateLoanDto)
+
+        public async Task<Loan> UpdateLoanAsync(int userId, int loanId, UpdateLoanDTO updateLoanDTO, Role role)
         {
-            var loan = await _context.Loans.FindAsync(loanId);
+            var loan = await _context.Loans.FirstOrDefaultAsync(l => l.Id == loanId);
 
             if (loan == null)
-                throw new Exception("Loan not found");
+                throw new Exception("Loan not found.");
 
-            if (loan.UserId != userId)
-                throw new Exception("Access denied");
+            // Admin → შეუძლია განახლება ყველას loan-ზე
+            if (role != Role.Administrator)
+            {
+                // ოღონდ უბრალო User → მხოლოდ საკუთარ loan-ს და Processing სტატუსში
+                if (loan.UserId != userId)
+                    throw new Exception("You are not allowed to update this loan.");
 
-            if (loan.Status != LoanStatus.Processing)
-                throw new Exception("Only loans in Processing state can be updated");
+                if (loan.Status != LoanStatus.Processing)
+                    throw new Exception("You can update loan only in 'Processing' status.");
+            }
 
-            loan.Amount = updateLoanDto.Amount;
-            loan.PeriodInMonths = updateLoanDto.PeriodInMonths;
+            // განახლება
+            loan.Amount = updateLoanDTO.Amount;
+            loan.Currency = updateLoanDTO.Currency;
+            loan.PeriodInMonths = updateLoanDTO.PeriodInMonths;
+            loan.loanType = updateLoanDTO.LoanType;
 
             await _context.SaveChangesAsync();
 
             return loan;
         }
 
-        public async Task<bool> DeleteLoanAsync(int userId, int loanId)
+
+        public async Task<bool> DeleteLoanAsync(int userId, int loanId, Role role)
         {
-            var loan = await _context.Loans.FindAsync(loanId);
+            var loan = await _context.Loans.FirstOrDefaultAsync(l => l.Id == loanId);
 
             if (loan == null)
-                throw new Exception("Loan not found");
+                throw new Exception("Loan not found.");
 
-            if (loan.UserId != userId)
-                throw new Exception("Access denied");
+            if (role != Role.Administrator)
+            {
+                if (loan.UserId != userId)
+                    throw new Exception("You are not allowed to delete this loan.");
 
-            if (loan.Status != LoanStatus.Processing)
-                throw new Exception("Only loans in Processing state can be deleted");
+                if (loan.Status != LoanStatus.Processing)
+                    throw new Exception("You can delete loan only in 'Processing' status.");
+            }
 
             _context.Loans.Remove(loan);
             await _context.SaveChangesAsync();
 
             return true;
         }
+
+
+
+        public async Task<bool> SetUserBlockStatusAsync(int targetUserId, bool isBlocked, Role role)
+        {
+            if (role != Role.Administrator)
+                throw new Exception("Only admin can block or unblock users.");
+
+            var user = await _context.Users.FindAsync(targetUserId);
+            if (user == null)
+                throw new Exception("User not found.");
+
+            user.IsBlocked = isBlocked;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
     }
 }

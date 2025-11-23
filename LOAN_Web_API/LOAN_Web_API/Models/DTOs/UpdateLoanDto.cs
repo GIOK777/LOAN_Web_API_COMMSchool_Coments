@@ -2,7 +2,7 @@
 
 namespace LOAN_Web_API.Models.DTOs
 {
-    public class UpdateLoanDto
+    public class UpdateLoanDTO
     {
         public LoanType LoanType { get; set; }
         public decimal Amount { get; set; }
