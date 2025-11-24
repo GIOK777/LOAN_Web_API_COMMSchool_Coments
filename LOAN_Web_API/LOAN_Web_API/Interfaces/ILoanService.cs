@@ -24,13 +24,13 @@ namespace LOAN_Web_API.Interfaces
         //Task<bool> DeleteLoanAsync(int userId, int loanId, Role role);
 
         // User Methods
-        Task<CustomResult<LoanResponseDTO>> AddLoanAsync(int userId, LoanRequestDTO requestDto);
+        Task<CustomResult<LoanResponseDTO>> AddLoanAsync(int userId, LoanRequestDTO loanRequestDTO);
         Task<CustomResult<IEnumerable<LoanResponseDTO>>> GetUserLoansAsync(int userId);
-        Task<CustomResult<LoanResponseDTO>> UpdateLoanAsync(int userId, int loanId, LoanRequestDTO updateDto);
+        Task<CustomResult<LoanResponseDTO>> UpdateLoanAsync(int userId, int loanId, LoanUpdateDTO loanUpdateDTO);
         Task<CustomResult<bool>> DeleteLoanAsync(int userId, int loanId);
 
         // Admin Methods
-        Task<CustomResult<LoanResponseDTO>> UpdateLoanStatusAsync(int loanId, LoanStatusUpdateDTO statusDto);
+        Task<CustomResult<LoanResponseDTO>> UpdateLoanStatusAsync(int loanId, LoanStatusUpdateDTO loanStatusUpdateDTO);
         Task<CustomResult<IEnumerable<LoanResponseDTO>>> GetAllLoansAsync();
         Task<CustomResult<bool>> DeleteLoanAdminAsync(int loanId);
     }

@@ -8,60 +8,90 @@ using System.Security.Claims;
 
 namespace LOAN_Web_API.Controllers
 {
+    [Authorize(Policy = "UserPolicy")] // წვდომა აქვს User-ს და Admin-ს
     [Route("api/[controller]")]
     [ApiController]
-    public class LoanController : ControllerBase
+    public class LoanController : BaseApiController
     {
         private readonly ILoanService _loanService;
-        private readonly ICurrentUserService _currentUser;
-        public LoanController(ILoanService loanService, ICurrentUserService currentUser)
+
+        public LoanController(ILoanService loanService)
         {
             _loanService = loanService;
-            _currentUser = currentUser;
         }
 
 
-        // მომხმარებელი + ადმინი შეუძლია ნახვა
-        [Authorize(Roles = "User,Admin")]
-        [HttpGet]
+        // POST: api/Loan
+        [HttpPost]
+        public async Task<IActionResult> AddLoan([FromBody] LoanRequestDTO loanRequestDTO)
+        {
+            // აქაც დაგვჭირდება LoanRequestDto-ის ვალიდატორი (დაამატებთ Validations ფოლდერში)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userId = GetUserId();
+            var result = await _loanService.AddLoanAsync(userId, loanRequestDTO);
+
+            if (result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result.Data);
+            }
+            // Failure-ს შემთხვევაში, სტატუსი იქნება 403 (Blocked) ან 400 (Validation Error)
+            return StatusCode(result.StatusCode, new { error = result.ErrorMessage });
+        }
+
+
+
+
+        // GET: api/Loan/my
+        [HttpGet("my")]
         public async Task<IActionResult> GetMyLoans()
         {
-            var loans = await _loanService.GetUserLoansAsync(_currentUser.UserId);
-            return Ok(loans);
+            var userId = GetUserId();
+            var result = await _loanService.GetUserLoansAsync(userId);
+
+            return StatusCode(result.StatusCode, result.Data); // 200 OK
         }
 
-        // მხოლოდ მომხმარებელმა შეიძლება შექმნა
-        [Authorize(Roles = "User")]
-        [HttpPost]
-        public async Task<IActionResult> CreateLoan(CreateLoanDTO createLoanDTO)
-        {
-            var loan = await _loanService.CreateLoanAsync(_currentUser.UserId, createLoanDTO);
-            return Ok(loan);
-        }
 
-        // ორივეს შეუძლია განახლება (ადმინს ყველას, იუზერს თავისის)
-        [Authorize(Roles = "User,Admin")]
+
+
+        // PUT: api/Loan/{loanId}
         [HttpPut("{loanId}")]
-        public async Task<IActionResult> UpdateLoan(int loanId, LoanRequestDTO updateLoanDTO)
+        public async Task<IActionResult> UpdateLoan(int loanId, [FromBody] LoanUpdateDTO loanUpdateDTO)
         {
-            var loan = await _loanService.UpdateLoanAsync(
-                _currentUser.UserId,
-                loanId,
-                updateLoanDTO,
-                _currentUser.Role
-            );
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            return Ok(loan);
+            var userId = GetUserId();
+            var result = await _loanService.UpdateLoanAsync(userId, loanId, loanUpdateDTO);
+
+            if (result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result.Data);
+            }
+
+            // 404 (Not Found), 403 (Not Processing)
+            return StatusCode(result.StatusCode, new { error = result.ErrorMessage });
         }
 
-        // მხოლოდ ადმინს შეუძლია მომხმარებლის დაბლოკვა
-        [Authorize(Roles = "Admin")]
-        [HttpPost("block/{userId}")]
-        public async Task<IActionResult> BlockUser(int userId)
+
+
+        // DELETE: api/Loan/{loanId}
+        [HttpDelete("{loanId}")]
+        public async Task<IActionResult> DeleteLoan(int loanId)
         {
-            await _loanService.BlockUserAsync(userId);
-            return Ok();
+            var userId = GetUserId();
+            var result = await _loanService.DeleteLoanAsync(userId, loanId);
+
+            if (result.IsSuccess)
+            {
+                return NoContent(); // 204 No Content
+            }
+
+            // 404 (Not Found), 403 (Not Processing)
+            return StatusCode(result.StatusCode, new { error = result.ErrorMessage });
         }
+
+
 
         // -----------------------------------------------------------------
 

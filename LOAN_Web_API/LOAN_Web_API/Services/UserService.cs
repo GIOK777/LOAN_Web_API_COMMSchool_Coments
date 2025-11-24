@@ -62,7 +62,7 @@ namespace LOAN_Web_API.Services
                 // ვაბრუნებთ true-ს, რაც ოპერაციის წარმატებაზე მიუთითებს
                 return CustomResult<bool>.Success(true);
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 // თუ ბაზაში შენახვისას მოხდა შეცდომა
                 // აქ კარგი იქნება ლოგირების დამატება

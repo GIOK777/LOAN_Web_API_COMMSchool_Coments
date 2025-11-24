@@ -26,6 +26,7 @@ namespace LOAN_Web_API
             builder.Services.AddFluentValidationAutoValidation();
             // მოიძებნე და დარეგისტრირე ყველა FluentValidator იმ Assembly-ში ანუ პროექტში, სადაც მოთავსებულია მითითებული კლასი.
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
 
 
             builder.Services.AddControllers();
@@ -92,36 +93,8 @@ namespace LOAN_Web_API
                     };
                 });
 
-            // პირველი ვარიანტი
+            
 
-            //var jwtSettings = builder.Configuration.GetSection("Jwt");
-            //var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
-
-            //builder.Services.AddAuthentication(options =>
-            //{
-            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //})
-            //.AddJwtBearer(options =>
-            //{
-            //    options.TokenValidationParameters = new TokenValidationParameters
-            //    {
-            //        ValidateIssuer = true,
-            //        ValidateAudience = true,
-            //        ValidateLifetime = true,
-            //        ValidateIssuerSigningKey = true,
-
-            //        ValidIssuer = jwtSettings["Issuer"],
-            //        ValidAudience = jwtSettings["Audience"],
-
-            //        IssuerSigningKey = new SymmetricSecurityKey(key),
-            //        ClockSkew = TimeSpan.Zero
-            //    };
-            //});
-
-
-            // პირველი ვარიანტი
-            // builder.Services.AddAuthorization();
 
             // --- Authorization Configuration (Role-Based) ---
             builder.Services.AddAuthorization(options =>

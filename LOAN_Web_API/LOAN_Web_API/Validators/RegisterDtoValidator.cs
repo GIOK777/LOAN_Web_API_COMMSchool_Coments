@@ -9,7 +9,7 @@ namespace LOAN_Web_API.Validators
         {
             RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100);
             RuleFor(x => x.LastName).NotEmpty().MaximumLength(100);
-            RuleFor(x => x.Username).NotEmpty().MinimumLength(3).MaximumLength(50);
+            RuleFor(x => x.UserName).NotEmpty().MinimumLength(3).MaximumLength(50);
             RuleFor(x => x.Email).NotEmpty().EmailAddress();
             RuleFor(x => x.Age).GreaterThanOrEqualTo(18);
             RuleFor(x => x.MonthlyIncome).GreaterThanOrEqualTo(0m); // "0m" = decimal literal
