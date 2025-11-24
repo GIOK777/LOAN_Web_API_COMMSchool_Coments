@@ -2,6 +2,7 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using LOAN_Web_API.Interfaces;
+using LOAN_Web_API.Mappers;
 using LOAN_Web_API.Models;
 using LOAN_Web_API.Services;
 using LOAN_Web_API.Validators;
@@ -59,43 +60,77 @@ namespace LOAN_Web_API
             });
 
 
-
+            // --- DB Context Configuration ---
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // --- Service Registrations (DIP / Dependency Injection) ---
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ILoanService, LoanService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IJwtGenerator, JwtGenerator>();
+
+            // --- AutoMapper Registration ---
+            builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 
 
-
-            var jwtSettings = builder.Configuration.GetSection("Jwt");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
-
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+            // --- JWT Authentication Configuration ---
+            var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing.");
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                    };
+                });
 
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
+            // პირველი ვარიანტი
 
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ClockSkew = TimeSpan.Zero
-                };
+            //var jwtSettings = builder.Configuration.GetSection("Jwt");
+            //var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
+
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            //})
+            //.AddJwtBearer(options =>
+            //{
+            //    options.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidateIssuer = true,
+            //        ValidateAudience = true,
+            //        ValidateLifetime = true,
+            //        ValidateIssuerSigningKey = true,
+
+            //        ValidIssuer = jwtSettings["Issuer"],
+            //        ValidAudience = jwtSettings["Audience"],
+
+            //        IssuerSigningKey = new SymmetricSecurityKey(key),
+            //        ClockSkew = TimeSpan.Zero
+            //    };
+            //});
+
+
+            // პირველი ვარიანტი
+            // builder.Services.AddAuthorization();
+
+            // --- Authorization Configuration (Role-Based) ---
+            builder.Services.AddAuthorization(options =>
+            {
+                //ეს არის ASP.NET Core-ის Authorization Policy-ის კონფიგურაცია, რომელიც საშუალებას გვაძლევს, დავაყენოთ წესები,
+                //თუ ვის აქვს კონკრეტულ რესურსებზე წვდომა, ტრადიციული როლების შემოწმებაზე უფრო მოქნილი გზით.
+                options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Administrator"));
+                options.AddPolicy("UserPolicy", policy => policy.RequireRole("User", "Administrator"));
             });
-
-            builder.Services.AddAuthorization();
-
 
 
 
@@ -105,9 +140,15 @@ namespace LOAN_Web_API
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
+                //ეს ნიშნავს, რომ თუ აპლიკაცია მუშაობის დროს წააწყდება დაუმუშავებელ შეცდომას (Exception),
+                //ეს Middleware დაიჭერს მას და ბრაუზერში გამოიტანს დეტალურ, მომხმარებლისთვის მოსახერხებელ გვერდს შეცდომის შესახებ.
+                app.UseDeveloperExceptionPage();
+
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            // აქ უნდა დაემატოს ჩვენი გლობალური Exception/Error Handling Middleware (შემდეგში)
 
             app.UseHttpsRedirection();
 

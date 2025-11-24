@@ -17,14 +17,14 @@ namespace LOAN_Web_API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDTO registerDTO)
+        public async Task<IActionResult> Register(UserRegisterDTO registerDTO)
         {
             var result = await _auth.RegisterAsync(registerDTO);
             return Ok(result);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO loginDTO)
+        public async Task<IActionResult> Login(UserLoginDTO loginDTO)
         {
             var token = await _auth.LoginAsync(loginDTO);
             return Ok(new { token });

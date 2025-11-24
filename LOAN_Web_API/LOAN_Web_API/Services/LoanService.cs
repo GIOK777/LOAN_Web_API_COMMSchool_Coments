@@ -55,23 +55,29 @@ namespace LOAN_Web_API.Services
         }
 
 
-        public async Task<Loan> UpdateLoanAsync(int userId, int loanId, UpdateLoanDTO updateLoanDTO, Role role)
+        public async Task<Loan> UpdateLoanAsync(int currentUserId, int loanId, LoanRequestDTO updateLoanDTO, Role role)
         {
-            var loan = await _context.Loans.FirstOrDefaultAsync(l => l.Id == loanId);
+            var loan = await _context.Loans.FindAsync(loanId);
 
             if (loan == null)
                 throw new Exception("Loan not found.");
 
-            // Admin → შეუძლია განახლება ყველას loan-ზე
-            if (role != Role.Administrator)
-            {
-                // ოღონდ უბრალო User → მხოლოდ საკუთარ loan-ს და Processing სტატუსში
-                if (loan.UserId != userId)
-                    throw new Exception("You are not allowed to update this loan.");
 
-                if (loan.Status != LoanStatus.Processing)
-                    throw new Exception("You can update loan only in 'Processing' status.");
-            }
+            // თუ არაა ადმინი და ცდილობს სხვის სესხს
+            if (role == Role.User && loan.UserId != currentUserId)
+                throw new Exception("Forbidden");
+
+
+            //// Admin → შეუძლია განახლება ყველას loan-ზე
+            //if (role != Role.Administrator)
+            //{
+            //    // ოღონდ უბრალო User → მხოლოდ საკუთარ loan-ს და Processing სტატუსში
+            //    if (loan.UserId != userId)
+            //        throw new Exception("You are not allowed to update this loan.");
+
+            //    if (loan.Status != LoanStatus.Processing)
+            //        throw new Exception("You can update loan only in 'Processing' status.");
+            //}
 
             // განახლება
             loan.Amount = updateLoanDTO.Amount;

@@ -3,7 +3,7 @@ using LOAN_Web_API.Models.DTOs;
 
 namespace LOAN_Web_API.Validators
 {
-    public class RegisterDtoValidator : AbstractValidator<RegisterDTO>
+    public class RegisterDtoValidator : AbstractValidator<UserRegisterDTO>
     {
         public RegisterDtoValidator()
         {
