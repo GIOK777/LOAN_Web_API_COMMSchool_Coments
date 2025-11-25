@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using LOAN_Web_API.Interfaces;
 using LOAN_Web_API.Mappers;
+using LOAN_Web_API.Middleware;
 using LOAN_Web_API.Models;
 using LOAN_Web_API.Services;
 using LOAN_Web_API.Validators;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Text;
 
 namespace LOAN_Web_API
@@ -19,6 +21,30 @@ namespace LOAN_Web_API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+
+            // --- SeriLog კონფიგურაცია (გამოყენება BUILDER-ის შექმნამდე) ---
+            // ლოგირების კონფიგურაცია appsettings.json-დან
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                .Build();
+
+            // SeriLog Logger-ის შექმნა
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration) // პარამეტრების წაკითხვა appsettings-დან
+                .Enrich.FromLogContext() // კონტექსტური ინფორმაციის დამატება
+                .WriteTo.Console() // ლოგირება კონსოლში (Dev-ისთვის)
+                                   // აქ შეგვიძლია დავამატოთ WriteTo.File ან WriteTo.MSSqlServer
+                                   // (იხილეთ AppSettings-ის კონფიგურაცია)
+                .CreateLogger();
+
+            // SeriLog-ის გამოყენება ASP.NET Core-ში
+            builder.Host.UseSerilog();
+
+
+
 
             // Add services to the container.
 
@@ -110,7 +136,17 @@ namespace LOAN_Web_API
 
             var app = builder.Build();
 
+
             // Configure the HTTP request pipeline.
+
+            // --- 1. Custom Exception Handling Middleware ---
+            // ეს უნდა იყოს პირველი (თუ UseDeveloperExceptionPage არ მუშაობს), რათა დაიჭიროს ყველა შეცდომა.
+            if (!app.Environment.IsDevelopment())
+            {
+                // Production გარემოში ვიყენებთ ჩვენს უსაფრთხო ჰენდლერს
+                app.UseMiddleware<ExceptionHandlingMiddleware>();
+            }
+
             if (app.Environment.IsDevelopment())
             {
                 //ეს ნიშნავს, რომ თუ აპლიკაცია მუშაობის დროს წააწყდება დაუმუშავებელ შეცდომას (Exception),
@@ -121,7 +157,8 @@ namespace LOAN_Web_API
                 app.UseSwaggerUI();
             }
 
-            // აქ უნდა დაემატოს ჩვენი გლობალური Exception/Error Handling Middleware (შემდეგში)
+
+            app.UseSerilogRequestLogging(); // რათა დალოგოს ყველა შემომავალი HTTP მოთხოვნა
 
             app.UseHttpsRedirection();
 
