@@ -53,6 +53,8 @@ namespace LOAN_Web_API
             // მოიძებნე და დარეგისტრირე ყველა FluentValidator იმ Assembly-ში ანუ პროექტში, სადაც მოთავსებულია მითითებული კლასი.
             builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
+            //builder.Services.AddValidatorsFromAssemblyContaining<LoanStatusUpdateDtoValidator>();
+            //builder.Services.AddValidatorsFromAssemblyContaining<LoanRequestDtoValidator>();
 
 
             builder.Services.AddControllers();
