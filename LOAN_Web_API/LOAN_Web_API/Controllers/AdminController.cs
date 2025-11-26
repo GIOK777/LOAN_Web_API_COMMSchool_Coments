@@ -1,10 +1,12 @@
 ﻿using LOAN_Web_API.Interfaces;
 using LOAN_Web_API.Models.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LOAN_Web_API.Controllers
 {
+    [Authorize(Policy = "AdminPolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : BaseApiController
