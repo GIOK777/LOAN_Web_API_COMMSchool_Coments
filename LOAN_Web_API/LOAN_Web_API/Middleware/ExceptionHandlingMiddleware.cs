@@ -4,6 +4,10 @@ using System.Net;
 namespace LOAN_Web_API.Middleware
 {
     // Middleware პასუხისმგებელია მთლიან API-ში დაუგეგმავი Exception-ების დაჭერაზე.
+    // (მაგ., NullReferenceException, DB კავშირის შეცდომა),
+    // რომელიც არ დაიჭირა ჩვენმა ბიზნეს ლოგიკამ (CustomResult-ის გამოყენებით).
+
+    // დაუბრუნოს კლიენტს ზოგადი, უსაფრთხო HTTP 500 Internal Server Error.
     public class ExceptionHandlingMiddleware
     {
         private readonly RequestDelegate _next;
@@ -13,6 +17,9 @@ namespace LOAN_Web_API.Middleware
             _next = next;
         }
 
+
+        //ყველა Middleware-ს აქვს ეს მეთოდი, რადგან ის არის კონტრაქტი,
+        //რომელსაც ASP.NET Core-ის Pipeline-ი ელოდება.
         public async Task InvokeAsync(HttpContext httpContext)
         {
             try
@@ -27,6 +34,8 @@ namespace LOAN_Web_API.Middleware
             }
         }
 
+
+        // HandleExceptionAsync - სადაც მიიღება გადაწყვეტილება, თუ როგორ უნდა დამუშავდეს შეცდომა.
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             // 1. ლოგირება (ყველაზე მნიშვნელოვანი ნაწილი)
